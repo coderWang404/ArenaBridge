@@ -13,6 +13,7 @@ struct AppConfig: Codable, Equatable {
     var tunnelKeyPath: String = "~/.ssh/id_ed25519"
     var serverKeyPath: String = "~/.ssh/arena_server_key"
     var contextDir: String = "~/arena-context"
+    var arenaURL: String? = nil
 
     static let defaultsKey = "dev.arena.bridge.config"
 

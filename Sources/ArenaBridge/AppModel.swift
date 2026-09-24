@@ -121,6 +121,18 @@ final class AppModel: ObservableObject {
         pasteboard.setString(text, forType: .string)
     }
 
+    var arenaPageURL: String {
+        if let url = config.arenaURL?.trimmingCharacters(in: .whitespaces), !url.isEmpty {
+            return url
+        }
+        return "https://arena.ai"
+    }
+
+    func openArena() {
+        guard let url = URL(string: arenaPageURL) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     func revealInFinder(_ path: String) {
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
     }

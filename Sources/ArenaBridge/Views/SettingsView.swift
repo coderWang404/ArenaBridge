@@ -46,6 +46,14 @@ struct SettingsView: View {
                 Button("重新生成 Arena 接入密钥") { regenerateServerKey() }
             }
 
+            Section("Arena") {
+                TextField("Arena 网址", text: Binding(
+                    get: { model.config.arenaURL ?? "https://arena.ai" },
+                    set: { model.config.arenaURL = $0 }
+                ))
+                Button("在默认浏览器中打开") { model.openArena() }
+            }
+
             Section("启动") {
                 Toggle("启动 App 时自动开启隧道", isOn: $model.config.autoStart)
             }

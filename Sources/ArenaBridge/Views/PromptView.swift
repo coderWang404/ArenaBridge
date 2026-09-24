@@ -10,6 +10,11 @@ struct PromptView: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Button {
+                    model.openArena()
+                } label: {
+                    Label("打开 Arena", systemImage: "globe")
+                }
+                Button {
                     regenerate()
                 } label: {
                     Label("重新生成", systemImage: "arrow.clockwise")

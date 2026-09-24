@@ -118,6 +118,13 @@ struct OverviewView: View {
             .disabled(testing)
 
             Button {
+                model.openArena()
+            } label: {
+                Label("打开 Arena", systemImage: "globe")
+            }
+            .controlSize(.large)
+
+            Button {
                 model.copyToClipboard(model.generatePrompt())
                 showToast("接入提示词已复制，去 Arena 粘贴")
             } label: {
