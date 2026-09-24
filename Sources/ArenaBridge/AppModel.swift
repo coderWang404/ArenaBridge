@@ -236,9 +236,14 @@ final class AppModel: ObservableObject {
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
             try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir)
         }
+        var text = out.joined(separator: "\n")
+        while text.hasSuffix("\n") { text.removeLast() }
+        if !existing.hasPrefix("\n") {
+            while text.hasPrefix("\n") { text.removeFirst() }
+        }
+        text += "\n"
         do {
-            try (out.joined(separator: "\n") + "\n")
-                .write(toFile: path, atomically: true, encoding: .utf8)
+            try text.write(toFile: path, atomically: true, encoding: .utf8)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
         } catch {
             return "写入 authorized_keys 失败：\(error.localizedDescription)"
@@ -265,7 +270,8 @@ final class AppModel: ObservableObject {
             .split(separator: " ", omittingEmptySubsequences: true)
             .map(String.init)
         let (options, keyPart) = splitOptions(tokens)
-        return (options + [keyPart]).joined(separator: " ").trimmingCharacters(in: .whitespaces)
+        let optionsPart = options.joined(separator: ",")
+        return ([optionsPart, keyPart].filter { !$0.isEmpty }).joined(separator: " ").trimmingCharacters(in: .whitespaces)
     }
 
     /// 拆出 authorized_keys 行的选项列表（去逗号分段，剔除 command=）与密钥部分。

@@ -53,52 +53,60 @@ struct SettingsView: View {
                     get: { model.config.restrictionEnabled },
                     set: { model.setRestrictionEnabled($0) }
                 ))
-                if model.config.restrictionEnabled {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if model.config.allowedDirs.isEmpty {
-                            Text("尚未添加允许目录——Arena 将被完全拒绝访问，请先添加。")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        } else {
-                            ForEach(model.config.allowedDirs, id: \.self) { dir in
-                                HStack(spacing: 8) {
-                                    Image(systemName: "folder")
-                                        .foregroundStyle(.secondary)
-                                    Text(model.shortenPath(dir))
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                    Spacer()
-                                    Button {
-                                        model.removeAllowedDir(dir)
-                                    } label: {
-                                        Image(systemName: "minus.circle.fill")
-                                            .foregroundStyle(.red)
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help("移除 \(dir)")
+                VStack(alignment: .leading, spacing: 8) {
+                    if model.config.allowedDirs.isEmpty {
+                        Text(model.config.restrictionEnabled
+                             ? "尚未添加允许目录——Arena 将被完全拒绝访问，请先添加。"
+                             : "先添加允许的目录，再打开上面的开关。")
+                            .font(.caption)
+                            .foregroundStyle(model.config.restrictionEnabled ? .red : .secondary)
+                    } else {
+                        ForEach(model.config.allowedDirs, id: \.self) { dir in
+                            HStack(spacing: 8) {
+                                Image(systemName: "folder")
+                                    .foregroundStyle(.secondary)
+                                Text(model.shortenPath(dir))
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Spacer()
+                                Button {
+                                    model.removeAllowedDir(dir)
+                                } label: {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundStyle(.red)
                                 }
+                                .buttonStyle(.borderless)
+                                .help("移除 \(dir)")
                             }
                         }
-                        HStack {
-                            Button("添加目录…") { pickAllowedDirs() }
-                            Spacer()
-                        }
-                        Toggle("严格模式：同时禁止读取允许目录之外的文件", isOn: Binding(
-                            get: { model.config.strictReadMode },
-                            set: { model.setStrictReadMode($0) }
-                        ))
+                    }
+                    Button("添加目录…") { pickAllowedDirs() }
+                    Toggle("严格模式：同时禁止读取允许目录之外的文件", isOn: Binding(
+                        get: { model.config.strictReadMode },
+                        set: { model.setStrictReadMode($0) }
+                    ))
+                    if model.config.restrictionEnabled {
                         Text("""
-                        启用后，Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制：
-                        只能在上面选择的目录内读写文件；~/arena-context（会话上下文）始终可读写；
+                        已启用：Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制。
+                        只能在上面目录内读写；~/arena-context（会话上下文）始终可读写；
                         ~/.ssh、钥匙串等敏感位置与系统目录一律禁止；关闭严格模式后，其他位置的文件变为只读。
                         关闭开关即刻恢复原状（自动还原 ~/.ssh/authorized_keys）。
                         """)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("""
+                        启用后，Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制：
+                        只能在上面选择的目录内读写文件；~/arena-context（会话上下文）始终可读写；
+                        ~/.ssh、钥匙串等敏感位置与系统目录一律禁止；关闭严格模式后，其他位置的文件变为只读。
+                        """)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.vertical, 4)
                 }
+                .padding(.vertical, 4)
                 if !model.restrictionStatus.isEmpty {
                     Text(model.restrictionStatus)
                         .font(.caption)
