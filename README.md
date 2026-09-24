@@ -1,5 +1,7 @@
 # ArenaBridge
 
+<img src="docs/icon.png" width="112" align="right" alt="ArenaBridge 图标">
+
 **把远端 AI Agent 接进你的本地终端。** 原生 macOS App（SwiftUI），把「远端 Agent → 云服务器 → 反向隧道 → 本机 Mac」整条链路装进一个界面。
 
 ArenaBridge 在你的 Mac 上维持一条到云服务器的反向 SSH 隧道：远端 agent 通过服务器进入你的本地终端，像本地 agent 一样读写文件、执行命令；本地会话上下文（opencode 会话转录）也会同步过去，实现"继承对话"。

@@ -96,6 +96,26 @@ final class TunnelManager: ObservableObject {
         }
     }
 
+    /// 退出 App 时同步清理隧道进程，避免留下孤儿 ssh 占住远端端口。
+    func terminateNow() {
+        enabled = false
+        pendingRestart?.cancel()
+        pendingRestart = nil
+        if let p = process, p.isRunning {
+            p.terminate()
+            let deadline = Date().addingTimeInterval(1.5)
+            while p.isRunning && Date() < deadline {
+                usleep(30_000)
+            }
+            if p.isRunning {
+                kill(p.processIdentifier, SIGKILL)
+            }
+        }
+        process = nil
+        isRunning = false
+        startedAt = nil
+    }
+
     func clearLogs() {
         logs.removeAll()
     }
