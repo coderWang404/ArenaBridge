@@ -77,6 +77,13 @@ struct OverviewView: View {
                 Text("Arena Agent → 阿里云服务器 → 反向隧道 → 本机 Mac")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                HStack(spacing: 5) {
+                    Image(systemName: "lock.shield")
+                        .font(.caption2)
+                    Text(restrictionSummary)
+                        .font(.caption)
+                }
+                .foregroundStyle(.tertiary)
             }
             Spacer()
             HStack(spacing: 7) {
@@ -175,6 +182,12 @@ struct OverviewView: View {
     private var tunnelState: CheckState {
         if tunnel.isRunning { return .ok }
         return tunnel.enabled ? .checking : .fail
+    }
+
+    private var restrictionSummary: String {
+        guard model.config.restrictionEnabled else { return "目录限制未启用" }
+        return "目录限制已启用 · \(model.config.allowedDirs.count) 个允许目录" +
+            (model.config.strictReadMode ? "（严格模式）" : "")
     }
 
     private var tunnelDetail: String {

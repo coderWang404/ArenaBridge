@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     @State private var password = ""
     @State private var message = ""
+    @State private var manualDir = ""
 
     var body: some View {
         Form {
@@ -43,7 +44,67 @@ struct SettingsView: View {
             Section("密钥") {
                 TextField("隧道密钥", text: $model.config.tunnelKeyPath)
                 TextField("Arena 接入密钥", text: $model.config.serverKeyPath)
+                TextField("Mac 接入密钥（服务器进入本机用）", text: $model.config.macKeyPath)
                 Button("重新生成 Arena 接入密钥") { regenerateServerKey() }
+            }
+
+            Section("Arena 目录限制") {
+                Toggle("启用目录限制", isOn: Binding(
+                    get: { model.config.restrictionEnabled },
+                    set: { model.setRestrictionEnabled($0) }
+                ))
+                if model.config.restrictionEnabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if model.config.allowedDirs.isEmpty {
+                            Text("尚未添加允许目录——Arena 将被完全拒绝访问，请先添加。")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        } else {
+                            ForEach(model.config.allowedDirs, id: \.self) { dir in
+                                HStack(spacing: 8) {
+                                    Image(systemName: "folder")
+                                        .foregroundStyle(.secondary)
+                                    Text(model.shortenPath(dir))
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer()
+                                    Button {
+                                        model.removeAllowedDir(dir)
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .help("移除 \(dir)")
+                                }
+                            }
+                        }
+                        HStack {
+                            Button("添加目录…") { pickAllowedDirs() }
+                            Spacer()
+                        }
+                        Toggle("严格模式：同时禁止读取允许目录之外的文件", isOn: Binding(
+                            get: { model.config.strictReadMode },
+                            set: { model.setStrictReadMode($0) }
+                        ))
+                        Text("""
+                        启用后，Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制：
+                        只能在上面选择的目录内读写文件；~/arena-context（会话上下文）始终可读写；
+                        ~/.ssh、钥匙串等敏感位置与系统目录一律禁止；关闭严格模式后，其他位置的文件变为只读。
+                        关闭开关即刻恢复原状（自动还原 ~/.ssh/authorized_keys）。
+                        """)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+                }
+                if !model.restrictionStatus.isEmpty {
+                    Text(model.restrictionStatus)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
             }
 
             Section("Arena") {
@@ -67,6 +128,18 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func pickAllowedDirs() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = true
+        panel.resolvesAliases = true
+        panel.title = "选择 Arena 允许工作的目录"
+        if panel.runModal() == .OK {
+            model.addAllowedDirs(panel.urls.map(\.path))
+        }
     }
 
     private func installKey() {
