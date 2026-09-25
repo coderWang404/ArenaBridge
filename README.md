@@ -32,6 +32,16 @@ ArenaBridge 在你的 Mac 上维持一条到云服务器的反向 SSH 隧道：�
 - **服务器侧**：`~/enter_mac.sh` 封装了「从服务器进入 Mac」的命令，远端 agent 直接调用。
 - **上下文**：`~/arena-context/`（transcript / sessions_index / export_session.py / arena_prompt.md），并同步一份到服务器。
 
+## 架构
+
+**全链路拓扑**（`docs/architecture_topology.png`，`swift make_arch.swift` 可重新生成）：
+
+![全链路拓扑](docs/architecture_topology.png)
+
+**App 内部架构**（`docs/architecture_app.png`）——视图层 → 状态服务层 → Shell 执行器 → 外部进程/文件，单向数据流：
+
+![App 内部架构](docs/architecture_app.png)
+
 ## 会话上下文工具链
 
 `~/arena-context/` 里的 `refresh.sh` / `export_session.py` 由本仓库 `templates/arena-context/` 提供（从 opencode 本地数据库 `~/.local/share/opencode/opencode.db` 只读生成 `sessions_index.md` 与 `transcript_current.md`）。概览页「会话上下文」变红 = 这两个文件缺失，任选其一恢复：
