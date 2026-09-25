@@ -32,6 +32,19 @@ ArenaBridge 在你的 Mac 上维持一条到云服务器的反向 SSH 隧道：�
 - **服务器侧**：`~/enter_mac.sh` 封装了「从服务器进入 Mac」的命令，远端 agent 直接调用。
 - **上下文**：`~/arena-context/`（transcript / sessions_index / export_session.py / arena_prompt.md），并同步一份到服务器。
 
+## 会话上下文工具链
+
+`~/arena-context/` 里的 `refresh.sh` / `export_session.py` 由本仓库 `templates/arena-context/` 提供（从 opencode 本地数据库 `~/.local/share/opencode/opencode.db` 只读生成 `sessions_index.md` 与 `transcript_current.md`）。概览页「会话上下文」变红 = 这两个文件缺失，任选其一恢复：
+
+```bash
+# 方式一：从仓库模板部署（缺什么补什么，不影响已有文件）
+mkdir -p ~/arena-context && cp -Rn templates/arena-context/. ~/arena-context/ && bash ~/arena-context/refresh.sh
+```
+
+或在 App 里点「刷新上下文」/上下文页「重新导出会话」（前提是 `refresh.sh` 已存在）。换机器时 opencode 数据库路径不同的话，改 `export_session.py` 顶部的 `DB` 常量即可。
+
+> 注意：转录会原样包含你会话里的内容——粘贴过的密钥、token 都会写进 `transcript_current.md` 并同步给远端 agent。分享前先检查，敏感凭据建议轮换。
+
 ## 目录限制（可选）
 
 默认情况下，远端 agent 拥有你本机用户级别的完整 shell。开启「设置 → Arena 目录限制」后可以把它的活动范围锁死：
@@ -62,7 +75,7 @@ ArenaBridge 在你的 Mac 上维持一条到云服务器的反向 SSH 隧道：�
 3. 首次配置（设置页）：
    - 填服务器地址 / 用户名 / 端口 → 输入密码点「安装公钥」
    - 点「开启远程登录」授权本机 sshd（首次会弹管理员密码框）
-   - 确认概览页四项状态全绿
+   - 确认概览页四项状态全绿（「会话上下文」异常时按下方「会话上下文工具链」恢复）
 4. 在远端 agent 的会话里粘贴「接入提示词」（概览页一键复制）。
 5. 点「全链路测试」验证：命令会从服务器穿透到本机执行并原路返回。
 
@@ -83,6 +96,11 @@ ArenaBridge 在你的 Mac 上维持一条到云服务器的反向 SSH 隧道：�
 ## 目录结构
 
 ```
+templates/arena-context/
+├── refresh.sh          # 重生成 sessions_index.md + transcript_current.md
+├── export_session.py   # 从 opencode 数据库导出任意会话转录
+└── README.md           # 上下文工作区说明
+
 Sources/ArenaBridge/
 ├── App.swift            # @main：窗口与依赖注入
 ├── AppModel.swift       # 全局状态：配置、上下文导出、全链路测试、提示词生成
