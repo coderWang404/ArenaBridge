@@ -174,7 +174,8 @@ struct OverviewView: View {
 
     private var tunnelState: CheckState {
         if tunnel.isRunning { return .ok }
-        return tunnel.enabled ? .checking : .fail
+        // 用户主动停止的隧道不应显示红色「异常」，用 disabled 表示未启用
+        return tunnel.enabled ? .checking : .disabled
     }
 
     private var restrictionSummary: String {

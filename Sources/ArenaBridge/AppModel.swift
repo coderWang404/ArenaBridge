@@ -466,11 +466,10 @@ final class AppModel: ObservableObject {
     }
 
     private var workNotes: String {
-        guard config.restrictionEnabled, !config.allowedDirs.isEmpty else {
-            return "- 我的项目主要在 ~/localprojects/ 下"
+        if config.restrictionEnabled, !config.allowedDirs.isEmpty {
+            return "- 我的项目就在上面列出的允许目录下，所有读写都请局限在这些目录内"
         }
-        let dirs = config.allowedDirs.map { "  \(expandPath($0))" }.joined(separator: "\n")
-        return "- 我的项目就在这些允许目录下：\n\(dirs)"
+        return "- 注意：我未开启目录限制，你当前拥有本机完整 shell 权限，操作前请格外谨慎地确认"
     }
 
     @discardableResult

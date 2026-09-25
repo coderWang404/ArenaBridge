@@ -59,6 +59,14 @@ enum Shell {
         if process.isRunning {
             timedOut = true
             process.terminate()
+            // SIGTERM 后给 2 秒退出窗口，仍存活则 SIGKILL，避免读写线程被挂住
+            let killDeadline = Date().addingTimeInterval(2)
+            while process.isRunning && Date() < killDeadline {
+                usleep(50_000)
+            }
+            if process.isRunning {
+                kill(process.processIdentifier, SIGKILL)
+            }
         }
         process.waitUntilExit()
         _ = readerDone.wait(timeout: .now() + 3)

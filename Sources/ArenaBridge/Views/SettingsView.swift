@@ -7,7 +7,6 @@ struct SettingsView: View {
 
     @State private var password = ""
     @State private var message = ""
-    @State private var manualDir = ""
 
     var body: some View {
         Form {
