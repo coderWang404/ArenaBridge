@@ -29,19 +29,7 @@ final class AppModel: ObservableObject {
         }
     }
 
-    var contextDir: String { expandPath(config.contextDir) }
-
-    func refreshContext(completion: ((String) -> Void)? = nil) {
-        let script = contextDir + "/refresh.sh"
-        guard FileManager.default.fileExists(atPath: script) else {
-            completion?("未找到 \(script)")
-            return
-        }
-        Shell.runAsync("/bin/bash", [script], timeout: 120) { result in
-            let text = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-            completion?(result.ok ? "上下文已刷新：\(text)" : "刷新失败：\(text)")
-        }
-    }
+    var runtimeDir: String { expandPath(config.runtimeDir) }
 
     func chainTest(completion: @escaping (String) -> Void) {
         let cfg = config
@@ -64,9 +52,9 @@ final class AppModel: ObservableObject {
 
     // MARK: - 目录限制（Arena Gate）
 
-    var gateScriptPath: String { contextDir + "/arena_gate.sh" }
-    var gateConfPath: String { contextDir + "/allowed_dirs.conf" }
-    var gateProfilePath: String { contextDir + "/arena_jail.sb" }
+    var gateScriptPath: String { runtimeDir + "/arena_gate.sh" }
+    var gateConfPath: String { runtimeDir + "/allowed_dirs.conf" }
+    var gateProfilePath: String { runtimeDir + "/arena_jail.sb" }
     var authorizedKeysPath: String { NSHomeDirectory() + "/.ssh/authorized_keys" }
 
     func setRestrictionEnabled(_ on: Bool) {
@@ -125,7 +113,7 @@ final class AppModel: ObservableObject {
     @discardableResult
     func deployGate(authorizedKeysOverride: String? = nil, artifactsDirOverride: String? = nil) -> String {
         let fm = FileManager.default
-        let ctxDir = artifactsDirOverride ?? contextDir
+        let ctxDir = artifactsDirOverride ?? runtimeDir
         let confPath = ctxDir + "/allowed_dirs.conf"
         let scriptPath = ctxDir + "/arena_gate.sh"
         let profilePath = ctxDir + "/arena_jail.sb"
@@ -139,6 +127,7 @@ final class AppModel: ObservableObject {
 
         if !fm.fileExists(atPath: ctxDir) {
             try? fm.createDirectory(atPath: ctxDir, withIntermediateDirectories: true)
+            try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: ctxDir)
         }
 
         do {
@@ -310,7 +299,6 @@ final class AppModel: ObservableObject {
         for dir in allowedDirs {
             rules.append("(allow file-read* file-write* (subpath \(q(dir))))")
         }
-        rules.append("(allow file-read* file-write* (subpath \(q(contextDir))))")
         for tool in ["miniconda3", ".cargo", ".rustup", ".nvm", ".pyenv", ".rbenv", "go", ".local", ".npm", ".cache", ".volta", ".deno", ".bun", ".m2", ".gradle", ".sdkman", ".gem"] {
             rules.append("(allow file-read* (subpath \(q(home + "/" + tool))))")
         }
@@ -390,7 +378,7 @@ final class AppModel: ObservableObject {
             esac
             np="$(normalize_path "$tok")"
             ok=0
-            for root in "${ALLOWED[@]}" "$HOME/arena-context" /usr /bin /sbin /opt /usr/local /opt/homebrew /Library /System /private/etc /private/var /tmp /etc /dev; do
+            for root in "${ALLOWED[@]}" /usr /bin /sbin /opt /usr/local /opt/homebrew /Library /System /private/etc /private/var /tmp /etc /dev; do
               if is_within "$np" "$root"; then ok=1; break; fi
             done
             if [ "$ok" -eq 0 ]; then
@@ -433,7 +421,7 @@ final class AppModel: ObservableObject {
         return """
         【任务：接入我的本地 Mac 终端，并继续我的开发工作】
 
-        我这边已经把反向隧道配置好了，你按下面步骤操作即可获得我本地 Mac 的完整终端。
+        我这边已经把反向隧道配置好了，你按下面步骤操作即可获得我本地 Mac 的终端。
 
         第一步：在沙箱里写入专用私钥（只需一次；若沙箱没有 ssh，先安装：apt-get install -y openssh-client）
 
@@ -455,20 +443,11 @@ final class AppModel: ObservableObject {
             ~/enter_mac.sh "命令"      # 在 Mac 上执行单条命令
             ~/enter_mac.sh             # 进入 Mac 的交互式 shell（配合 ssh -tt 使用）
         \(restrictionNote)
-        第四步：读取上下文，了解我的项目和之前的会话
-
-            ssh -i ~/.ssh/arena_server_key \(config.user)@\(config.host) '~/enter_mac.sh "cat ~/arena-context/README.md"'
-            ssh -i ~/.ssh/arena_server_key \(config.user)@\(config.host) '~/enter_mac.sh "cat ~/arena-context/transcript_current.md"'
-
-        更多历史会话（按需导出）：
-
-            ~/enter_mac.sh "python3 ~/arena-context/export_session.py --list"
-            ~/enter_mac.sh "python3 ~/arena-context/export_session.py <sessionID>"
-
-        完成以上步骤后，你就在我的 Mac 上拥有完整 shell 权限了（文件、终端、项目都在本地）。之后请像本地 agent 一样继续我的工作：
-        - 我的项目主要在 ~/localprojects/ 下
+        完成以上步骤后，你就接入我的 Mac 了。之后请像本地 agent 一样继续我的工作：
+        \(workNotes)
         - 长命令建议写成脚本再执行，避免嵌套引号问题
         - 破坏性操作（删除、覆盖、推送）请先向我确认
+        - 不要尝试读取或上传我的任何对话历史 / 会话记录，我这边没有提供也不允许
         """
     }
 
@@ -486,10 +465,18 @@ final class AppModel: ObservableObject {
         """
     }
 
+    private var workNotes: String {
+        guard config.restrictionEnabled, !config.allowedDirs.isEmpty else {
+            return "- 我的项目主要在 ~/localprojects/ 下"
+        }
+        let dirs = config.allowedDirs.map { "  \(expandPath($0))" }.joined(separator: "\n")
+        return "- 我的项目就在这些允许目录下：\n\(dirs)"
+    }
+
     @discardableResult
     func writePromptFile() -> String {
         let text = generatePrompt()
-        let path = contextDir + "/arena_prompt.md"
+        let path = runtimeDir + "/arena_prompt.txt"
         try? text.write(toFile: path, atomically: true, encoding: .utf8)
         return path
     }

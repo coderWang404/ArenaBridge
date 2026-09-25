@@ -2,6 +2,7 @@ import SwiftUI
 
 enum CheckState: Equatable {
     case unknown
+    case disabled
     case checking
     case ok
     case fail
@@ -9,6 +10,7 @@ enum CheckState: Equatable {
     var label: String {
         switch self {
         case .unknown: return "未知"
+        case .disabled: return "未启用"
         case .checking: return "检查中"
         case .ok: return "正常"
         case .fail: return "异常"
@@ -18,6 +20,7 @@ enum CheckState: Equatable {
     var color: Color {
         switch self {
         case .unknown: return .secondary
+        case .disabled: return .secondary
         case .checking: return .orange
         case .ok: return .green
         case .fail: return .red
@@ -29,7 +32,6 @@ final class StatusStore: ObservableObject {
     @Published var localSSHD: CheckState = .unknown
     @Published var serverReachable: CheckState = .unknown
     @Published var keyAuth: CheckState = .unknown
-    @Published var contextReady: CheckState = .unknown
     @Published var lastChecked: Date?
 
     var config: AppConfig
@@ -82,10 +84,6 @@ final class StatusStore: ObservableObject {
                 ], timeout: 12)
                 keyOK = r.ok && r.output.contains("arena-bridge-ok")
             }
-            let dir = expandPath(cfg.contextDir)
-            let contextOK = ["transcript_current.md", "arena_prompt.md"].allSatisfy {
-                FileManager.default.fileExists(atPath: dir + "/" + $0)
-            }
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.localSSHD = sshdOpen ? .ok : .fail
@@ -95,7 +93,6 @@ final class StatusStore: ObservableObject {
                 } else if !reachable {
                     self.keyAuth = .fail
                 }
-                self.contextReady = contextOK ? .ok : .fail
                 self.lastChecked = Date()
             }
         }

@@ -29,7 +29,7 @@ struct PromptView: View {
                     let path = model.writePromptFile()
                     showToast("已保存 \(path)")
                 } label: {
-                    Label("保存到 arena-context", systemImage: "square.and.arrow.down")
+                    Label("保存到本地", systemImage: "square.and.arrow.down")
                 }
                 Spacer()
                 Text("把这段发给 Arena 的 agent 模式即可接入本机")

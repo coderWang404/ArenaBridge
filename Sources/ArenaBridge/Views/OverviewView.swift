@@ -42,11 +42,11 @@ struct OverviewView: View {
                         detail: "密钥登录 " + (status.keyAuth == .ok ? "正常" : "异常")
                     )
                     StatusCard(
-                        title: "会话上下文",
-                        subtitle: "转录 / 索引 / 导出工具",
-                        icon: "doc.text",
-                        state: status.contextReady,
-                        detail: "~/arena-context"
+                        title: "目录限制",
+                        subtitle: "Arena 活动范围",
+                        icon: "lock.shield",
+                        state: restrictionState,
+                        detail: restrictionDetail
                     )
                 }
                 actions
@@ -139,13 +139,6 @@ struct OverviewView: View {
             }
             .controlSize(.large)
 
-            Button {
-                model.refreshContext { message in showToast(message) }
-            } label: {
-                Label("刷新上下文", systemImage: "arrow.clockwise")
-            }
-            .controlSize(.large)
-
             Spacer()
         }
     }
@@ -188,6 +181,16 @@ struct OverviewView: View {
         guard model.config.restrictionEnabled else { return "目录限制未启用" }
         return "目录限制已启用 · \(model.config.allowedDirs.count) 个允许目录" +
             (model.config.strictReadMode ? "（严格模式）" : "")
+    }
+
+    private var restrictionState: CheckState {
+        model.config.restrictionEnabled ? .ok : .disabled
+    }
+
+    private var restrictionDetail: String {
+        guard model.config.restrictionEnabled else { return "未限制（Arena 拥有完整 shell）" }
+        let dirs = model.config.allowedDirs.map { model.shortenPath($0) }.joined(separator: "、")
+        return dirs.isEmpty ? "无允许目录（Arena 将被拒绝）" : dirs
     }
 
     private var tunnelDetail: String {

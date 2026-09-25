@@ -13,7 +13,7 @@ struct AppConfig: Codable, Equatable {
     var tunnelKeyPath: String = "~/.ssh/id_ed25519"
     var serverKeyPath: String = "~/.ssh/arena_server_key"
     var macKeyPath: String = "~/.ssh/arena_mac_key"
-    var contextDir: String = "~/arena-context"
+    var runtimeDir: String = "~/.arena-bridge"
     var arenaURL: String? = nil
     var restrictionEnabled: Bool = false
     var strictReadMode: Bool = true
@@ -40,7 +40,7 @@ struct AppConfig: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case host, user, remotePort, localPort, autoStart
         case tunnelKeyPath, serverKeyPath, macKeyPath
-        case contextDir, arenaURL
+        case runtimeDir, arenaURL
         case restrictionEnabled, strictReadMode, allowedDirs
     }
 
@@ -57,7 +57,7 @@ struct AppConfig: Codable, Equatable {
         tunnelKeyPath = try c.decodeIfPresent(String.self, forKey: .tunnelKeyPath) ?? "~/.ssh/id_ed25519"
         serverKeyPath = try c.decodeIfPresent(String.self, forKey: .serverKeyPath) ?? "~/.ssh/arena_server_key"
         macKeyPath = try c.decodeIfPresent(String.self, forKey: .macKeyPath) ?? "~/.ssh/arena_mac_key"
-        contextDir = try c.decodeIfPresent(String.self, forKey: .contextDir) ?? "~/arena-context"
+        runtimeDir = try c.decodeIfPresent(String.self, forKey: .runtimeDir) ?? "~/.arena-bridge"
         arenaURL = try c.decodeIfPresent(String.self, forKey: .arenaURL)
         restrictionEnabled = try c.decodeIfPresent(Bool.self, forKey: .restrictionEnabled) ?? false
         strictReadMode = try c.decodeIfPresent(Bool.self, forKey: .strictReadMode) ?? true

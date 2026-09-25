@@ -88,7 +88,7 @@ struct SettingsView: View {
                     if model.config.restrictionEnabled {
                         Text("""
                         已启用：Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制。
-                        只能在上面目录内读写；~/arena-context（会话上下文）始终可读写；
+                        只能在上面目录内读写；/tmp 可作临时目录；
                         ~/.ssh、钥匙串等敏感位置与系统目录一律禁止；关闭严格模式后，其他位置的文件变为只读。
                         关闭开关即刻恢复原状（自动还原 ~/.ssh/authorized_keys）。
                         """)
@@ -98,7 +98,7 @@ struct SettingsView: View {
                     } else {
                         Text("""
                         启用后，Arena 经服务器进入本机的每条命令都会经过 macOS 沙箱强制限制：
-                        只能在上面选择的目录内读写文件；~/arena-context（会话上下文）始终可读写；
+                        只能在上面选择的目录内读写文件；/tmp 可作临时目录；
                         ~/.ssh、钥匙串等敏感位置与系统目录一律禁止；关闭严格模式后，其他位置的文件变为只读。
                         """)
                         .font(.caption)
@@ -129,7 +129,7 @@ struct SettingsView: View {
 
             Section("关于") {
                 LabeledContent("版本", value: "1.0")
-                Text("Arena Agent → 阿里云服务器 → 反向隧道 → 本机 Mac。把本地终端借给 Arena 上选中的 agent，并把会话上下文一并交底。")
+                Text("Arena Agent → 阿里云服务器 → 反向隧道 → 本机 Mac。把本地终端借给 Arena 上选中的 agent——仅限你指定的目录，不共享任何对话上下文。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

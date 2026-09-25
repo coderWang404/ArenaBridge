@@ -3,7 +3,6 @@ import SwiftUI
 enum SidebarItem: String, CaseIterable, Identifiable {
     case overview
     case tunnel
-    case context
     case prompt
     case settings
 
@@ -13,7 +12,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .overview: return "概览"
         case .tunnel: return "隧道"
-        case .context: return "上下文"
         case .prompt: return "接入提示词"
         case .settings: return "设置"
         }
@@ -23,7 +21,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .overview: return "gauge"
         case .tunnel: return "arrow.left.arrow.right"
-        case .context: return "doc.text"
         case .prompt: return "paperplane"
         case .settings: return "gearshape"
         }
@@ -49,7 +46,6 @@ struct ContentView: View {
                 switch selection ?? .overview {
                 case .overview: OverviewView()
                 case .tunnel: TunnelView()
-                case .context: ContextView()
                 case .prompt: PromptView()
                 case .settings: SettingsView()
                 }

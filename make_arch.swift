@@ -128,7 +128,7 @@ func drawTopology() -> NSImage {
     // 云服务器
     panel(image, H, rect: NSRect(x: 620, y: 60, width: 400, height: 220),
           title: "云服务器（sshd:22，公网可达）",
-          lines: ["authorized_keys：arena-server 公钥", "~/enter_mac.sh：进入 Mac 的命令封装", "~/arena-context/：上下文同步副本", "回环监听 127.0.0.1:2222", "（隧道只绑回环，公网扫不到）"],
+          lines: ["authorized_keys：arena-server 公钥", "~/enter_mac.sh：进入 Mac 的命令封装", "回环监听 127.0.0.1:2222", "（隧道只绑回环，公网扫不到）"],
           stripe: Palette.blue)
 
     // 本机 Mac 大框
@@ -163,11 +163,11 @@ func drawTopology() -> NSImage {
     arrow(image, H, from: NSPoint(x: 1365, y: 660), to: NSPoint(x: 1365, y: 700), color: Palette.orange,
           label: "⑤ 沙箱内执行", labelAt: NSPoint(x: 1365, y: 682))
 
-    // 底部工具链说明
+    // 底部设计原则
     panel(image, H, rect: NSRect(x: 50, y: 790, width: 1500, height: 100),
-          title: "会话上下文工具链 ~/arena-context/（templates/arena-context/ 提供）",
-          lines: ["refresh.sh → sessions_index.md（全部会话索引）+ transcript_current.md（最近会话转录）",
-                  "export_session.py ← opencode.db 只读；可导出任意会话；文件随 ~/arena-context/ 同步到服务器，agent 读取后「继承对话」"],
+          title: "设计原则：不碰对话上下文",
+          lines: ["本软件不采集、不导出、不上传任何 opencode 会话内容；agent 也禁止读取/上传对话历史",
+                  "运行目录 ~/.arena-bridge/ 只存放闸门三件套；agent 仅能在你选定的允许目录内活动"],
           stripe: Palette.gray)
     return image
 }
@@ -188,14 +188,13 @@ func drawAppArchitecture() -> NSImage {
     // 视图层
     panel(image, H, rect: NSRect(x: 50, y: 100, width: 1500, height: 40), title: "① SwiftUI 视图层（ContentView 侧栏导航）", lines: [], stripe: Palette.blue)
     let views: [(String, String, CGFloat)] = [
-        ("概览", "四项状态卡 + 一键操作", 90),
-        ("隧道", "开关 / 日志 / 重连状态", 350),
-        ("上下文", "会话索引 / 导出", 610),
-        ("接入提示词", "生成 / 复制 / 保存", 870),
-        ("设置", "服务器 / 密钥 / 目录限制", 1130)
+        ("概览", "状态卡 + 一键操作", 90),
+        ("隧道", "开关 / 日志 / 重连状态", 450),
+        ("接入提示词", "生成 / 复制 / 保存", 810),
+        ("设置", "服务器 / 密钥 / 目录限制", 1170)
     ]
     for (name, desc, x) in views {
-        panel(image, H, rect: NSRect(x: x, y: 152, width: 240, height: 74),
+        panel(image, H, rect: NSRect(x: x, y: 152, width: 320, height: 74),
               title: name,
               lines: [desc],
               stripe: Palette.blue)
@@ -229,18 +228,17 @@ func drawAppArchitecture() -> NSImage {
 
     // 文件层
     panel(image, H, rect: NSRect(x: 50, y: 830, width: 740, height: 180),
-          title: "~/arena-context/（运行时工作区）",
-          lines: ["refresh.sh → sessions_index.md + transcript_current.md",
-                  "export_session.py → transcript_<id>.md（导出任意会话）",
-                  "arena_prompt.md ← App「保存到 arena-context」",
-                  "arena_gate.sh / allowed_dirs.conf / arena_jail.sb ← App 生成"],
+          title: "~/.arena-bridge/（运行目录）",
+          lines: ["arena_gate.sh / allowed_dirs.conf / arena_jail.sb ← App 生成",
+                  "arena_prompt.txt ← 「保存到本地」的提示词快照",
+                  "（不含任何会话/对话数据）"],
           stripe: Palette.purple)
     panel(image, H, rect: NSRect(x: 830, y: 830, width: 720, height: 180),
           title: "外部世界",
           lines: ["云服务器 sshd:22 —— 隧道 + chainTest 穿透目标",
                   "本机 sshd:22 —— StatusStore 探测对象",
                   "~/.ssh/authorized_keys —— 目录限制闸门的挂载点",
-                  "opencode.db（~/.local/share/）—— 会话数据源"],
+                  "（不访问 opencode 数据库，不采集会话内容）"],
           stripe: Palette.gray)
 
     // 层间箭头
