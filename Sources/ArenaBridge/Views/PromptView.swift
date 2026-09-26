@@ -31,6 +31,17 @@ struct PromptView: View {
                 } label: {
                     Label("保存到本地", systemImage: "square.and.arrow.down")
                 }
+                Button {
+                    let keyPath = expandPath(model.config.serverKeyPath)
+                    guard FileManager.default.fileExists(atPath: keyPath) else {
+                        showToast("私钥文件不存在：\(keyPath)")
+                        return
+                    }
+                    model.revealInFinder(keyPath)
+                    showToast("已在访达中显示私钥，可直接拖给 agent 当附件（免转录）")
+                } label: {
+                    Label("显示私钥文件", systemImage: "key")
+                }
                 Spacer()
                 Text("把这段发给 Arena 的 agent 模式即可接入本机")
                     .font(.caption)

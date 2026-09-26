@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import CryptoKit
 
 final class AppModel: ObservableObject {
     @Published var config: AppConfig {
@@ -415,9 +416,13 @@ final class AppModel: ObservableObject {
 
     func generatePrompt() -> String {
         let keyPath = expandPath(config.serverKeyPath)
-        let rawKey = (try? String(contentsOfFile: keyPath, encoding: .utf8))?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? "(未找到 \(keyPath))"
-        let key = rawKey.split(separator: "\n").joined(separator: "\n    ")
+        let keyData = (try? Data(contentsOf: URL(fileURLWithPath: keyPath))) ?? Data()
+        let keyStep: String
+        if keyData.isEmpty {
+            keyStep = "（未找到私钥文件 \(keyPath)——请先在 App「设置 → 密钥」生成 Arena 接入密钥，再重新生成提示词）"
+        } else {
+            keyStep = Self.privateKeyStep(keyData: keyData, keyPath: keyPath)
+        }
         return """
         【任务：接入我的本地 Mac 终端，并继续我的开发工作】
 
@@ -425,10 +430,7 @@ final class AppModel: ObservableObject {
 
         第一步：在沙箱里写入专用私钥（只需一次；若沙箱没有 ssh，先安装：apt-get install -y openssh-client）
 
-            mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat > ~/.ssh/arena_server_key <<'KEYEOF'
-            \(key)
-            KEYEOF
-            chmod 600 ~/.ssh/arena_server_key
+        \(keyStep)
 
         第二步：连接我的服务器
 
@@ -448,6 +450,31 @@ final class AppModel: ObservableObject {
         - 长命令建议写成脚本再执行，避免嵌套引号问题
         - 破坏性操作（删除、覆盖、推送）请先向我确认
         - 不要尝试读取或上传我的任何对话历史 / 会话记录，我这边没有提供也不允许
+        """
+    }
+
+    /// 私钥投递步骤：单行 base64 + 强制自校验。
+    /// LLM 逐字转录长密钥必然偶发丢字符，因此把「静默损坏」变成「当场发现、整体重抄」。
+    static func privateKeyStep(keyData: Data, keyPath: String) -> String {
+        let b64 = keyData.base64EncodedString()
+        let hash = SHA256.hash(data: keyData).map { String(format: "%02x", $0) }.joined()
+        let pub = ((try? String(contentsOfFile: keyPath + ".pub", encoding: .utf8)) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        var verify = ["            ssh-keygen -y -f ~/.ssh/arena_server_key"]
+        if !pub.isEmpty {
+            verify.append("            # 输出必须精确等于：\(pub)")
+        }
+        verify.append("            sha256sum ~/.ssh/arena_server_key")
+        verify.append("            # 输出第一段哈希必须精确等于：\(hash)")
+        return """
+        下面一整行 base64 就是私钥文件的全部内容：请原样复制——不要换行、不要增删字符、不要手工修补。
+
+            echo '\(b64)' | base64 -d > ~/.ssh/arena_server_key
+            chmod 600 ~/.ssh/arena_server_key
+
+        写入后必须通过以下两项校验，任一不符，就回到上面从原文重新完整复制那一行 base64（不要用你剪贴板里的旧副本，更不要猜测缺失字符），改完再校验：
+
+        \(verify.joined(separator: "\n"))
         """
     }
 
